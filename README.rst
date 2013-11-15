@@ -51,6 +51,7 @@ Use it on your ``settings.py``.
 
 .. code-block:: python
 
+    [settings]
     SECRET_KEY = config('SECRET_KEY')
     DEBUG = config('DEBUG', default=False, cast=bool)
     EMAIL_HOST = config('EMAIL_HOST', default='localhost')
@@ -70,7 +71,7 @@ and `dj-datatabase-url <https://pypi.python.org/pypi/dj-database-url/>`_.
     # coding: utf-8
     from unipath import Path
     from decouple import Config
-    from dj_database_url import db_url
+    from dj_database_url import
 
 
     PROJECT_ROOT = Path(__file__).parent
@@ -81,10 +82,9 @@ and `dj-datatabase-url <https://pypi.python.org/pypi/dj-database-url/>`_.
     TEMPLATE_DEBUG = DEBUG
 
     DATABASES = {
-        'default': config(
+        'default': dj_database_url.config(
             'DATABASE_URL',
-            default='sqlite:///' + PROJECT_ROOT.child('database.db'),
-            cast=db_url
+            default='sqlite:///' + PROJECT_ROOT.child('database.db')
         )
     }
 
