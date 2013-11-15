@@ -1,5 +1,12 @@
 # coding: utf-8
-from ConfigParser import SafeConfigParser
+import sys
+
+if sys.version_info >= (3, 0):
+    from configparser import SafeConfigParser
+    cast_class = str
+else:
+    from ConfigParser import SafeConfigParser
+    cast_class = unicode
 
 
 class Config(object):
@@ -19,7 +26,7 @@ class Config(object):
         self.parser = SafeConfigParser()
         self.parser.readfp(open(config_file))
 
-    def get(self, option, default=u'', cast=unicode):
+    def get(self, option, default=u'', cast=cast_class):
         """
         Return the value for option or default option is not defined.
         """
