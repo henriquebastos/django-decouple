@@ -69,3 +69,9 @@ def test_env_os_environ():
         assert True == config('KeyTrue', cast=bool)
         assert True == config('KeyFallback', cast=bool)
     del os.environ['KeyFallback']
+
+def test_env_null_false():
+    with patch('decouple.open', return_value=StringIO(ENVFILE), create=True):
+        config = ConfigEnv('.env')
+        assert ValueError, config('KeyNotNull', null=False)
+        assert True == config('KeyTrue', cast=bool)

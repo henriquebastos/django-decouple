@@ -23,9 +23,10 @@ class ConfigBase(object):
     def __init__(self, config_file):
         raise NotImplemented
 
-    def get(self, option, default=string_empty, cast=string_type):
+    def get(self, option, default=string_empty, cast=string_type, null=True):
         """
-        Return the value for option or default option is not defined.
+        Return the value for option or default option is not defined, if can
+        be null
         """
         raise NotImplemented
 
@@ -55,12 +56,15 @@ class ConfigIni(ConfigBase):
         self.parser = ConfigParser()
         self.parser.readfp(open(config_file))
 
-    def get(self, option, default=string_empty, cast=string_type):
+    def get(self, option, default=string_empty, cast=string_type, null=True):
         """
         Return the value for option or default option is not defined.
         """
         if not self.parser.has_option(self.SECTION, option):
-            return cast(default)
+            if null:
+                return cast(default)
+            else:
+                raise ValueError('Option %s need a value' % option)
 
         getter = {
             bool: self.parser.getboolean,
@@ -132,7 +136,7 @@ class ConfigEnv(ConfigBase):
 
         return self._BOOLEANS[value.lower()]
 
-    def get(self, option, default=string_empty, cast=string_type):
+    def get(self, option, default=string_empty, cast=string_type, null=True):
         """
         Return the value for option or default option is not defined.
         """
@@ -141,7 +145,10 @@ class ConfigEnv(ConfigBase):
             # If default was not defined return it, else make sure to cast.
             # This is usefull for cases like dj-database-url.parse.
             if default == string_empty:
-                return default
+                if null:
+                    return default
+                else:
+                    raise ValueError('Option %s need a value' % option)
             else:
                 return cast(default)
 
@@ -153,7 +160,7 @@ class ConfigEnv(ConfigBase):
 
 class ConfigShell(ConfigEnv):
     """
-    Fallback class that only look on os.envirion.
+    Fallback class that only look on os.environ.
     """
     def __init__(self, config_file=None):
         pass

@@ -61,3 +61,9 @@ def test_ini_bool_false():
         assert False == config('KeyZero', cast=bool)
         assert False == config('KeyNo', cast=bool)
         assert False == config('KeyOff', cast=bool)
+
+def test_ini_null_false():
+    with patch('decouple.open', return_value=StringIO(INIFILE), create=True):
+        config = ConfigIni('settings.ini')
+        assert ValueError, config('KeyNotNull', null=False)
+        assert True == config('KeyTrue', cast=bool)
