@@ -1,9 +1,10 @@
 # coding: utf-8
 import os
+import pytest
 import sys
-from mock import patch, mock_open
+from mock import patch
 from decouple import ConfigEnv
-
+from faults import ImproperlyConfigured
 
 # Useful for very coarse version differentiation.
 PY3 = sys.version_info[0] == 3
@@ -34,7 +35,8 @@ NoInterpolation=%(KeyOff)s
 def test_env_comment():
     with patch('decouple.open', return_value=StringIO(ENVFILE), create=True):
         config = ConfigEnv('.env')
-        assert '' == config('CommentedKey')
+        with pytest.raises(ImproperlyConfigured):
+            config('CommentedKey')
 
 def test_env_percent_not_escaped():
     with patch('decouple.open', return_value=StringIO(ENVFILE), create=True):
@@ -69,3 +71,16 @@ def test_env_os_environ():
         assert True == config('KeyTrue', cast=bool)
         assert True == config('KeyFallback', cast=bool)
     del os.environ['KeyFallback']
+
+def test_env_not_null():
+    with patch('decouple.open', return_value=StringIO(ENVFILE), create=True):
+        config = ConfigEnv('.env')
+        with pytest.raises(ImproperlyConfigured):
+            config('KeyNotNull')
+
+        assert True == config('KeyNotNull', default=True, cast=bool)
+
+def test_env_not_null_with_default_none():
+    with patch('decouple.open', return_value=StringIO(ENVFILE), create=True):
+        config = ConfigEnv('.env')
+        assert None == config('KeyNotNull', default=None, null=True)

@@ -1,7 +1,7 @@
 # coding: utf-8
 import os
 import sys
-
+from faults import ImproperlyConfigured
 
 # Useful for very coarse version differentiation.
 PY3 = sys.version_info[0] == 3
@@ -23,9 +23,10 @@ class ConfigBase(object):
     def __init__(self, config_file):
         raise NotImplemented
 
-    def get(self, option, default=string_empty, cast=string_type):
+    def get(self, option, default=None, cast=string_type, null=False):
         """
-        Return the value for option or default option is not defined.
+        Return the value for option or default option is not defined, if can
+        be null
         """
         raise NotImplemented
 
@@ -55,12 +56,20 @@ class ConfigIni(ConfigBase):
         self.parser = ConfigParser()
         self.parser.readfp(open(config_file))
 
-    def get(self, option, default=string_empty, cast=string_type):
+    def get(self, option, default=None, cast=string_type, null=False):
         """
-        Return the value for option or default option is not defined.
+        Return the casted value for option, default option if its defined,
+        None if can be null, else raises ImproperlyConfigured.
         """
         if not self.parser.has_option(self.SECTION, option):
-            return cast(default)
+            if default is None:
+                if not null:
+                    raise ImproperlyConfigured(
+                        'Option %s not configured' % option)
+                else:
+                    return default
+            else:
+                return cast(default)
 
         getter = {
             bool: self.parser.getboolean,
@@ -132,16 +141,23 @@ class ConfigEnv(ConfigBase):
 
         return self._BOOLEANS[value.lower()]
 
-    def get(self, option, default=string_empty, cast=string_type):
+    def get(self, option, default=None, cast=string_type, null=False):
         """
-        Return the value for option or default option is not defined.
+        Return the casted value for option, default option if its defined,
+        None if can be null, else raises ImproperlyConfigured.
         """
         if option not in self.data and \
            option not in os.environ:
-            # If default was not defined return it, else make sure to cast.
+            # It's required to pass a default value to return this, and if this
+            # argument can be None it's also required to set null=True. Else
+            # make sure to cast.
             # This is usefull for cases like dj-database-url.parse.
-            if default == string_empty:
-                return default
+            if default is None:
+                if not null:
+                    raise ImproperlyConfigured(
+                        'Option %s not configured' % option)
+                else:
+                    return default
             else:
                 return cast(default)
 
@@ -153,7 +169,7 @@ class ConfigEnv(ConfigBase):
 
 class ConfigShell(ConfigEnv):
     """
-    Fallback class that only look on os.envirion.
+    Fallback class that only look on os.environ.
     """
     def __init__(self, config_file=None):
         pass

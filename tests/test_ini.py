@@ -1,5 +1,7 @@
 # coding: utf-8
+import pytest
 import sys
+from faults import ImproperlyConfigured
 from mock import patch, mock_open
 from decouple import ConfigIni
 
@@ -34,7 +36,8 @@ Interpolation=%(KeyOff)s
 def test_ini_comment():
     with patch('decouple.open', return_value=StringIO(INIFILE), create=True):
         config = ConfigIni('settings.ini')
-        assert '' == config('CommentedKey')
+        with pytest.raises(ImproperlyConfigured):
+            config('CommentedKey')
 
 def test_ini_percent_escape():
     with patch('decouple.open', return_value=StringIO(INIFILE), create=True):
@@ -61,3 +64,16 @@ def test_ini_bool_false():
         assert False == config('KeyZero', cast=bool)
         assert False == config('KeyNo', cast=bool)
         assert False == config('KeyOff', cast=bool)
+
+def test_env_not_null():
+    with patch('decouple.open', return_value=StringIO(INIFILE), create=True):
+        config = ConfigIni('settings.ini')
+        with pytest.raises(ImproperlyConfigured):
+            config('KeyNotNull')
+
+        assert True == config('KeyNotNull', default=True, cast=bool)
+
+def test_env_not_null_with_default_none():
+    with patch('decouple.open', return_value=StringIO(INIFILE), create=True):
+        config = ConfigIni('settings.ini')
+        assert None == config('KeyNotNull', default=None, null=True)
