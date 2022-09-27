@@ -42,7 +42,7 @@ class Config(object):
         Helper to convert config values to boolean as ConfigParser do.
         """
         if value.lower() not in self._BOOLEANS:
-            raise ValueError('Not a boolean: %s' % value)
+            raise ValueError(f'Not a boolean: {value}')
 
         return self._BOOLEANS[value.lower()]
 
@@ -50,13 +50,12 @@ class Config(object):
         """
         Return the value for option or default if defined.
         """
-        if option in self.repository:
-            value = self.repository.get(option)
-        else:
-            value = default
-
+        value = self.repository.get(option) if option in self.repository else default
         if isinstance(value, Undefined):
-            raise UndefinedValueError('%s option not found and default value was not defined.' % option)
+            raise UndefinedValueError(
+                f'{option} option not found and default value was not defined.'
+            )
+
 
         if isinstance(cast, Undefined):
             cast = lambda v: v  # nop
@@ -157,11 +156,7 @@ class AutoConfig(object):
 
         # search the parent
         parent = os.path.dirname(path)
-        if parent and parent != os.path.sep:
-            return self._find_file(parent)
-
-        # reached root without finding any files.
-        return ''
+        return self._find_file(parent) if parent and parent != os.path.sep else ''
 
     def _load(self, path):
         # Avoid unintended permission errors
